@@ -107,7 +107,7 @@ func main() {
 			},
 		)
 
-		var dsn = "host=localhost user=postgres password=xpd dbname=kludemy_test"
+		var dsn = "host=localhost user=postgres password=*** dbname=***"
 		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 			Logger: newLogger,
 		})
