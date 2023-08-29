@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -45,7 +46,40 @@ func (Activity) TableName() string {
 	return "Activity"
 }
 
+func OpenDb(dbName string) *gorm.DB {
+
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second, // Slow SQL threshold
+			LogLevel:                  logger.Info, // Log level
+			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+			ParameterizedQueries:      true,        // Don't include params in the SQL log
+			Colorful:                  false,       // Disable color
+		},
+	)
+
+	userName := os.Getenv("user_name")
+	password := os.Getenv("password")
+
+	dsn := fmt.Sprintf("host=localhost user=%s password=%s dbname=%s", userName, password, dbName)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: newLogger,
+	})
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+	return db
+}
+
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	var server = gin.Default()
 
 	server.POST("/person", func(ctx *gin.Context) {
@@ -96,30 +130,23 @@ func main() {
 
 	server.GET("/test", func(ctx *gin.Context) {
 
-		newLogger := logger.New(
-			log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-			logger.Config{
-				SlowThreshold:             time.Second, // Slow SQL threshold
-				LogLevel:                  logger.Info, // Log level
-				IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-				ParameterizedQueries:      true,        // Don't include params in the SQL log
-				Colorful:                  false,       // Disable color
-			},
-		)
-
-		var dsn = "host=localhost user=postgres password=xpd dbname=kludemy_test"
-		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-			Logger: newLogger,
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
+		db := OpenDb("kludemy_test")
 
 		var activity []Activity
 		db.Where("id < 10").Find(&activity)
 		fmt.Println(activity)
 		ctx.JSON(200, activity)
 
+	})
+
+	server.GET("/test2", func(ctx *gin.Context) {
+		type Product struct {
+			gorm.Model
+			price float64
+		}
+
+		db := OpenDb("test")
+		db.AutoMigrate(&Product{})
 	})
 
 	fmt.Println("http://localhost:8082")
