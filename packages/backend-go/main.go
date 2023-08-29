@@ -130,7 +130,28 @@ func main() {
 
 	server.GET("/test", func(ctx *gin.Context) {
 
+<<<<<<< HEAD
 		db := OpenDb("kludemy_test")
+=======
+		newLogger := logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+			logger.Config{
+				SlowThreshold:             time.Second, // Slow SQL threshold
+				LogLevel:                  logger.Info, // Log level
+				IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+				ParameterizedQueries:      true,        // Don't include params in the SQL log
+				Colorful:                  false,       // Disable color
+			},
+		)
+
+		var dsn = "host=localhost user=postgres password=*** dbname=***"
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+			Logger: newLogger,
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+>>>>>>> d0ea3285a19b6ecaa0e10593269955d9150339e4
 
 		var activity []Activity
 		db.Where("id < 10").Find(&activity)
